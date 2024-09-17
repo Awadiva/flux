@@ -1,0 +1,55 @@
+name: flux
+description: Une nouvelle application Flutter.
+
+publish_to: 'none' # Remplacez par un dépôt si vous voulez publier
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Les autres dépendances Flutter
+  firebase_core: ^3.4.1
+  firebase_auth: ^5.2.1
+  cloud_firestore: ^5.4.1
+  provider: ^6.1.2
+  google_sign_in: ^6.2.1
+  flutter_rating_bar: ^4.0.1
+  intl: ^0.19.0
+  share: ^2.0.4
+  country_picker: ^2.0.26
+  intl_phone_field: ^3.2.0
+  firebase_storage: ^12.3.0
+  image_picker: ^1.1.2
+  crypto: ^3.0.5
+  # Cupertino icons pour iOS
+  cupertino_icons: ^1.0.2
+  file_picker: ^8.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  # Définir les ressources d'images
+  assets:
+    - assets/images/
+
+# Ajout des plateformes supportées par le projet
+platforms:
+  android:
+    # Ajoutez les détails spécifiques de la configuration Android si nécessaire
+  ios:
+    # Ajoutez les détails spécifiques de la configuration iOS si nécessaire
+  windows:
+    # Ajoutez les détails spécifiques de la configuration Windows si nécessaire
+  web:
+
+    # Ajoutez les détails spécifiques de la configuration Web si nécessaire
+
