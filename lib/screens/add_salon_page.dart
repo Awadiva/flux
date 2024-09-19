@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:crypto/crypto.dart'; // Pour le hashage des mots de passe
+import 'dart:convert'; // Pour encoder en UTF8
 
 class AddSalonPage extends StatefulWidget {
   @override
@@ -11,8 +13,14 @@ class _AddSalonPageState extends State<AddSalonPage> {
   final TextEditingController _salonNameController = TextEditingController();
   final TextEditingController _adminNameController = TextEditingController();
   final TextEditingController _adminEmailController = TextEditingController();
-  final TextEditingController _adminPasswordController = TextEditingController(); // Ajout du champ mot de passe
+  final TextEditingController _adminPasswordController = TextEditingController(); 
   String _adminPhoneNumber = '';
+
+  // Fonction pour hacher le mot de passe
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password); // Encode le mot de passe en UTF8
+    return sha256.convert(bytes).toString(); // Retourne le hash SHA256
+  }
 
   // Fonction pour ajouter un salon avec les informations de l'admin à Firestore
   Future<void> _addSalon() async {
@@ -20,13 +28,18 @@ class _AddSalonPageState extends State<AddSalonPage> {
         _adminNameController.text.isNotEmpty &&
         _adminEmailController.text.isNotEmpty &&
         _adminPhoneNumber.isNotEmpty &&
-        _adminPasswordController.text.isNotEmpty) { // Vérification du mot de passe
+        _adminPasswordController.text.isNotEmpty) {
+
+      // Hachage du mot de passe avant de le stocker
+      String hashedPassword = _hashPassword(_adminPasswordController.text.trim());
+
+      // Ajout des informations à Firestore
       await FirebaseFirestore.instance.collection('salons').add({
         'salon_name': _salonNameController.text.trim(),
         'admin_name': _adminNameController.text.trim(),
         'admin_email': _adminEmailController.text.trim(),
         'admin_phone': _adminPhoneNumber.trim(),
-        'admin_password': _adminPasswordController.text.trim(), // Ajout du mot de passe
+        'admin_password_hash': hashedPassword, // Stocke le mot de passe haché
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -37,8 +50,8 @@ class _AddSalonPageState extends State<AddSalonPage> {
       _salonNameController.clear();
       _adminNameController.clear();
       _adminEmailController.clear();
-      _adminPhoneNumber = ''; // Efface le numéro de téléphone
       _adminPasswordController.clear();
+      _adminPhoneNumber = '';
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Veuillez remplir tous les champs.')),
@@ -80,13 +93,13 @@ class _AddSalonPageState extends State<AddSalonPage> {
                   labelText: 'Téléphone de l\'admin',
                   border: OutlineInputBorder(),
                 ),
-                initialCountryCode: 'FR', // Code du pays par défaut
+                initialCountryCode: 'FR', 
                 onChanged: (phone) {
                   _adminPhoneNumber = phone.completeNumber;
                 },
               ),
               TextField(
-                controller: _adminPasswordController, // Nouveau champ
+                controller: _adminPasswordController,
                 obscureText: true,
                 decoration: InputDecoration(labelText: 'Mot de passe de l\'admin'),
               ),

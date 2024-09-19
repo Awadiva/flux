@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-//import 'esthetician_home.dart'; // Import de la page EstheticianHome
 
 void main() {
   runApp(MyApp());
@@ -13,18 +12,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.pink,
       ),
-      initialRoute: '/home', // Utiliser '/home' au lieu de '/'
+      initialRoute: '/', // Définir la route initiale
       routes: {
-         // Page d'accueil ou page de connexion
-        '/': (context) => EstheticianHome(selectedSalon: ''), // Page après l'inscription
-        '/manageAppointments': (context) => ManageAppointmentsPage(),
-        '/manageProductOrders': (context) => ManageProductOrdersPage(),
+        '/': (context) => HomePage(), // Page d'accueil ou de connexion
+        '/estheticianHome': (context) => EstheticianHome(salonId: 'Salon Example'), // Page après l'inscription
+        '/manageAppointments': (context) => ManageAppointmentsPage(), // Gestion des RDV
+        '/manageProductOrders': (context) => ManageProductOrdersPage(), // Gestion des commandes
       },
     );
   }
 }
 
-// Page d'accueil ou de connexion (à compléter selon vos besoins)
+// Page d'accueil ou de connexion (à personnaliser selon vos besoins)
 class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -33,7 +32,12 @@ class HomePage extends StatelessWidget {
         title: Text('Page d\'accueil ou de connexion'),
       ),
       body: Center(
-        child: Text('Page d\'accueil ou connexion ici.'),
+        child: ElevatedButton(
+          onPressed: () {
+            Navigator.pushNamed(context, '/estheticianHome');
+          },
+          child: Text('Aller à l\'accueil Esthéticienne'),
+        ),
       ),
     );
   }
@@ -73,9 +77,9 @@ class ManageProductOrdersPage extends StatelessWidget {
 
 // Page d'accueil esthéticienne après sélection d'un salon
 class EstheticianHome extends StatelessWidget {
-  final String selectedSalon;
+  final String salonId;
 
-  EstheticianHome({required this.selectedSalon});
+  EstheticianHome({required this.salonId});
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +87,7 @@ class EstheticianHome extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.pink, // Couleur de l'entête en rose
         title: Text(
-          'Accueil Esthéticienne - $selectedSalon', // Nom du salon sélectionné
+          'Accueil Esthéticienne - $salonId', // Nom du salon sélectionné
           style: TextStyle(color: Colors.white), // Texte en blanc
         ),
         centerTitle: true,
@@ -94,7 +98,7 @@ class EstheticianHome extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/background_salon.jpeg'), // Image de fond à ajouter dans les assets
+                image: AssetImage('assets/images/background.png'), // Image de fond à ajouter dans les assets
                 fit: BoxFit.cover,
               ),
             ),
@@ -106,8 +110,8 @@ class EstheticianHome extends StatelessWidget {
               children: [
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                     backgroundColor: Colors.white, // Bouton en blanc
-                     foregroundColor: Colors.pink, // Texte en rose
+                    backgroundColor: Colors.white, // Bouton en blanc
+                    foregroundColor: Colors.pink, // Texte en rose
                     padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),

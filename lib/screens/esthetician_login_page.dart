@@ -1,130 +1,119 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flux/screens/esthetician_home.dart'; // Import the home page
+import 'esthetician_home.dart'; // Import the esthetician home page
 
 class EstheticianLoginPage extends StatefulWidget {
   @override
-  _EstheticianLoginPageState createState() => _EstheticianLoginPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
-class _EstheticianLoginPageState extends State<EstheticianLoginPage> {
+class _LoginPageState extends State<EstheticianLoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String? _selectedSalon;
-  List<String> _salons = [];
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _fetchSalons();
-  }
 
-  Future<void> _fetchSalons() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('salons').get();
-      List<String> salons = snapshot.docs.map((doc) => doc['salon_name'] as String).toList();
-      setState(() {
-        _salons = salons;
-      });
-    } catch (e) {
-      print('Error fetching salons: $e');
-    }
-  }
-
-  Future<void> _loginEsthetician() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('estheticians')
-          .where('email', isEqualTo: _emailController.text.trim())
-          .where('password', isEqualTo: _passwordController.text.trim())
-          .get();
-
-      if (snapshot.docs.isNotEmpty) {
-        var estheticianDoc = snapshot.docs.first;
-        var data = estheticianDoc.data() as Map<String, dynamic>;
-        String? registeredSalon = data['registered_salon'] as String?;
-
-        if (registeredSalon != null && _salons.contains(registeredSalon)) {
-          setState(() {
-            _selectedSalon = registeredSalon;
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Connexion réussie. Salon sélectionné: $_selectedSalon')),
-          );
-
-          // Check if a salon is selected before navigating
-          if (_selectedSalon != null) {
-            // Redirect to EstheticianHomePage
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => EstheticianHome(selectedSalon: _selectedSalon!), // Safe usage
-              ),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Veuillez sélectionner un salon.')),
-            );
-          }
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Salon enregistré non trouvé')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Email ou mot de passe incorrect')),
-        );
-      }
-    } catch (e) {
-      print('Error logging in: $e');
-    }
+    // Ajouter un listener sur l'emailController pour déclencher une recherche dans Firestore
+    _emailController.addListener(() {
+      _fetchSalonForEmail(_emailController.text.trim());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Connexion Esthéticienne')),
+      appBar: AppBar(
+        title: Text('Formulaire de connexion'),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Icon(Icons.login, size: 40),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: 'Adresse e-mail'),
               keyboardType: TextInputType.emailAddress,
             ),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
               obscureText: true,
+              decoration: InputDecoration(labelText: 'Mot de passe'),
             ),
             SizedBox(height: 20),
-            if (_salons.isNotEmpty)
-              DropdownButton<String>(
-                value: _selectedSalon,
-                hint: Text('Choisissez un salon'),
-                items: _salons.map((salon) {
-                  return DropdownMenuItem<String>(
-                    value: salon,
-                    child: Text(salon),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    _selectedSalon = value;
-                  });
-                },
-              ),
+            _selectedSalon != null
+                ? Text('Salon sélectionné: $_selectedSalon')
+                : _errorMessage != null
+                ? Text(
+              _errorMessage!,
+              style: TextStyle(color: Colors.red),
+            )
+                : Text('Aucun salon trouvé'),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _loginEsthetician,
+              onPressed: _handleLogin,
               child: Text('Se connecter'),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _fetchSalonForEmail(String email) async {
+    if (email.isEmpty) {
+      setState(() {
+        _selectedSalon = null;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    try {
+      // Cherche dans la collection 'clients' par email pour récupérer le salon sélectionné
+      QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+          .collection('clients')
+          .where('email', isEqualTo: email)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        var clientData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        setState(() {
+          _selectedSalon = clientData['salon'] ?? 'Salon inconnu';
+          _errorMessage = null;
+        });
+      } else {
+        setState(() {
+          _selectedSalon = null;
+          _errorMessage = 'Aucun salon trouvé pour cet email';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _selectedSalon = null;
+        _errorMessage = 'Erreur lors de la récupération du salon';
+      });
+      print('Erreur lors de la récupération du salon pour l\'email: $e');
+    }
+  }
+
+  void _handleLogin() {
+    if (_selectedSalon != null) {
+      // Après une connexion réussie, rediriger vers la page EstheticianHome
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => EstheticianHome(salonId: _selectedSalon!), // Passe le salon sélectionné
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Veuillez entrer un email valide ou un mot de passe correct.')),
+      );
+    }
   }
 }

@@ -50,9 +50,9 @@ class MyApp extends StatelessWidget {
         },
         // EstheticianHomePage: Ensure selectedSalon is passed
         '/estheticianHome': (context) {
-          final String? selectedSalon = ModalRoute.of(context)!.settings.arguments as String?;
-          if (selectedSalon != null) {
-            return EstheticianHome(selectedSalon: selectedSalon);
+          final String? salonId = ModalRoute.of(context)!.settings.arguments as String?;
+          if (salonId != null) {
+            return EstheticianHome(salonId: salonId); // Use salonId instead of selectedSalon
           } else {
             return Scaffold(
               body: Center(

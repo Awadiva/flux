@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crypto/crypto.dart'; // Import pour hashage
-import 'dart:convert'; // pour utf8.encode()
+import 'package:crypto/crypto.dart'; // Pour le hashage des mots de passe
+import 'dart:convert'; // Pour encoder en UTF8
 
 class AdminLoginPage extends StatefulWidget {
   final String salonId;
@@ -18,36 +18,33 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String _errorMessage = '';
 
-  // Fonction pour hasher le mot de passe
-  String hashPassword(String password) {
-    var bytes = utf8.encode(password);
+  // Fonction pour hacher le mot de passe
+  String _hashPassword(String password) {
+    var bytes = utf8.encode(password); 
     return sha256.convert(bytes).toString();
   }
 
   // Fonction de connexion de l'administrateur
   void _loginAdmin() async {
-    String enteredEmail = _emailController.text;
-    String enteredPassword = _passwordController.text;
+    String enteredEmail = _emailController.text.trim();
+    String enteredPassword = _passwordController.text.trim();
+    String enteredPasswordHash = _hashPassword(enteredPassword); // Hache le mot de passe entré
 
     try {
-      // Récupérer les données du salon depuis Firestore
-      QuerySnapshot salonDocs = await FirebaseFirestore.instance
+      // Récupérer les données du salon correspondant à l'ID
+      DocumentSnapshot salonDoc = await FirebaseFirestore.instance
           .collection('salons')
-          .where('admin_email', isEqualTo: enteredEmail)
+          .doc(widget.salonId)
           .get();
 
-      if (salonDocs.docs.isNotEmpty) {
-        var salonData = salonDocs.docs.first.data() as Map<String, dynamic>;
+      if (salonDoc.exists) {
+        Map<String, dynamic> salonData = salonDoc.data() as Map<String, dynamic>;
         String adminEmail = salonData['admin_email'];
         String adminPasswordHash = salonData['admin_password_hash'];
 
-        // Hasher le mot de passe entré pour le comparer au hash stocké
-        String enteredPasswordHash = hashPassword(enteredPassword);
-
-        // Vérifier si l'email et le mot de passe sont corrects
+        // Vérifier si l'email et le mot de passe haché correspondent
         if (enteredEmail == adminEmail && enteredPasswordHash == adminPasswordHash) {
-          // Connexion réussie
-          widget.onLoginSuccess();
+          widget.onLoginSuccess(); // Connexion réussie
           Navigator.pop(context); // Fermer la page de connexion
         } else {
           setState(() {
