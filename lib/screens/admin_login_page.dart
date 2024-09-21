@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crypto/crypto.dart'; // Pour le hashage des mots de passe
-import 'dart:convert'; // Pour encoder en UTF8
 
 class AdminLoginPage extends StatefulWidget {
   final String salonId;
-  final VoidCallback onLoginSuccess;
+  final VoidCallback onLoginSuccess; // Pour afficher le menu après connexion
 
   AdminLoginPage({required this.salonId, required this.onLoginSuccess});
 
@@ -16,36 +14,36 @@ class AdminLoginPage extends StatefulWidget {
 class _AdminLoginPageState extends State<AdminLoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  String _errorMessage = '';
+  String? _errorMessage;
+  bool _obscurePassword = true; // Variable pour gérer l'affichage du mot de passe
 
-  // Fonction pour hacher le mot de passe
-  String _hashPassword(String password) {
-    var bytes = utf8.encode(password); 
-    return sha256.convert(bytes).toString();
-  }
-
-  // Fonction de connexion de l'administrateur
-  void _loginAdmin() async {
+  Future<void> _handleLogin() async {
     String enteredEmail = _emailController.text.trim();
     String enteredPassword = _passwordController.text.trim();
-    String enteredPasswordHash = _hashPassword(enteredPassword); // Hache le mot de passe entré
+
+    if (enteredEmail.isEmpty || enteredPassword.isEmpty) {
+      setState(() {
+        _errorMessage = 'Veuillez remplir tous les champs.';
+      });
+      return;
+    }
 
     try {
-      // Récupérer les données du salon correspondant à l'ID
+      // Cherche dans la collection 'salons' l'email de l'admin pour un salon donné
       DocumentSnapshot salonDoc = await FirebaseFirestore.instance
           .collection('salons')
           .doc(widget.salonId)
           .get();
 
       if (salonDoc.exists) {
-        Map<String, dynamic> salonData = salonDoc.data() as Map<String, dynamic>;
-        String adminEmail = salonData['admin_email'];
-        String adminPasswordHash = salonData['admin_password_hash'];
+        Map<String, dynamic> adminData = salonDoc.data() as Map<String, dynamic>;
+        String storedPassword = adminData['admin_password'];
 
-        // Vérifier si l'email et le mot de passe haché correspondent
-        if (enteredEmail == adminEmail && enteredPasswordHash == adminPasswordHash) {
-          widget.onLoginSuccess(); // Connexion réussie
-          Navigator.pop(context); // Fermer la page de connexion
+        // Vérifier si le mot de passe saisi correspond à celui enregistré
+        if (enteredPassword == storedPassword &&
+            adminData['admin_email'] == enteredEmail) {
+          // Connexion réussie
+          widget.onLoginSuccess(); // Appelle la fonction pour afficher le menu
         } else {
           setState(() {
             _errorMessage = 'Email ou mot de passe incorrect.';
@@ -67,36 +65,46 @@ class _AdminLoginPageState extends State<AdminLoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.pink,
         title: Text('Connexion Admin'),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Icon(Icons.login, size: 40),
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(labelText: 'Adresse e-mail'),
+              keyboardType: TextInputType.emailAddress,
             ),
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
-              obscureText: true,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _loginAdmin,
-              child: Text('Se connecter'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.pink),
-            ),
-            if (_errorMessage.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  _errorMessage,
-                  style: TextStyle(color: Colors.red),
+              obscureText: _obscurePassword,
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword; // Change l'état
+                    });
+                  },
                 ),
               ),
+            ),
+            SizedBox(height: 20),
+            if (_errorMessage != null)
+              Text(
+                _errorMessage!,
+                style: TextStyle(color: Colors.red),
+              ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _handleLogin,
+              child: Text('Se connecter'),
+            ),
           ],
         ),
       ),

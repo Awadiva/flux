@@ -5,6 +5,10 @@ import 'reviews_page.dart'; // Importer la page des avis
 import 'client_profile.dart'; // Importer la page du profil client
 
 class NotificationsPage extends StatefulWidget {
+  
+final String salonName;
+
+  NotificationsPage({required this.salonName});
   @override
   _NotificationsPageState createState() => _NotificationsPageState();
 }
@@ -23,7 +27,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ClientHome()),
+          MaterialPageRoute(builder: (context) => ClientHome(selectedSalon: widget.salonName,)),
         );
         break;
       case 1:
@@ -32,7 +36,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ReviewsPage()),
+          MaterialPageRoute(builder: (context) => ReviewsPage(selectedSalon: widget.salonName,)),
         );
         break;
       case 3:
@@ -63,7 +67,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ClientHome()),
+              MaterialPageRoute(builder: (context) => ClientHome(selectedSalon: widget.salonName,)),
             );
           },
         ),

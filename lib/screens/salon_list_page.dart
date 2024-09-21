@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'salon_detail_page.dart';
-import 'edit_salon_page.dart'; // Page pour modifier le salon
+import 'salon_detail_page.dart'; // Import de la page des détails du salon
 
 class SalonListPage extends StatelessWidget {
   @override
@@ -29,29 +28,6 @@ class SalonListPage extends StatelessWidget {
 
                 return ListTile(
                   title: Text(salonName),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.edit, color: Colors.blue),
-                        onPressed: () {
-                          // Naviguer vers la page de modification du salon
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => EditSalonPage(salonId: salonId),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () {
-                          _showDeleteConfirmationDialog(context, salonId);
-                        },
-                      ),
-                    ],
-                  ),
                   onTap: () {
                     Navigator.push(
                       context,
@@ -67,45 +43,5 @@ class SalonListPage extends StatelessWidget {
         },
       ),
     );
-  }
-
-  void _showDeleteConfirmationDialog(BuildContext context, String salonId) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text("Confirmer la suppression"),
-          content: Text("Êtes-vous sûr de vouloir supprimer ce salon ?"),
-          actions: [
-            TextButton(
-              child: Text("Annuler"),
-              onPressed: () {
-                Navigator.of(context).pop(); // Fermer la boîte de dialogue
-              },
-            ),
-            TextButton(
-              child: Text("Supprimer"),
-              onPressed: () {
-                _deleteSalon(salonId, context);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _deleteSalon(String salonId, BuildContext context) async {
-    try {
-      await FirebaseFirestore.instance.collection('salons').doc(salonId).delete();
-      Navigator.of(context).pop(); // Fermer la boîte de dialogue après la suppression
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Salon supprimé avec succès.")),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Erreur lors de la suppression du salon.")),
-      );
-    }
   }
 }

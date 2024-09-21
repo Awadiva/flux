@@ -5,9 +5,11 @@ import 'payment_page.dart';
 class ProductPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Notre Boutique',style: TextStyle(color: Colors.white)),
+        title: Text('Notre Boutique', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.pink,
       ),
       body: SingleChildScrollView(
@@ -19,20 +21,20 @@ class ProductPage extends StatelessWidget {
               child: Text(
                 'Notre Boutique',
                 style: TextStyle(
-                  fontSize: 28,
+                  fontSize: screenSize.width * 0.07,
                   fontWeight: FontWeight.bold,
                   color: Colors.pink,
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: screenSize.height * 0.02),
             Center(
               child: Text(
                 'Découvrez notre gamme exclusive de produits de beauté.',
-                style: TextStyle(fontSize: 16),
+                style: TextStyle(fontSize: screenSize.width * 0.04),
               ),
             ),
-            SizedBox(height: 16),
+            SizedBox(height: screenSize.height * 0.02),
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -40,14 +42,14 @@ class ProductPage extends StatelessWidget {
               crossAxisSpacing: 16,
               mainAxisSpacing: 16,
               children: [
-                _buildProductCard(context, 'Fard à paupières', 'assets/images/eyeshadow.png', 45),
-                _buildProductCard(context, 'Crème de nuit', 'assets/images/night_cream.png', 25),
-                _buildProductCard(context, 'Base de maquillage', 'assets/images/makeup_base.png', 23),
-                _buildProductCard(context, 'Pinceau à maquillage', 'assets/images/makeup_brush.png', 20),
-                _buildProductCard(context, 'Base de maquillage', 'assets/images/makeup_base1.png', 22),
-                _buildProductCard(context, 'Rouge à lèvres rose', 'assets/images/rose_lipstick.png', 15),
-                _buildProductCard(context, 'Rouge à lèvres rouge', 'assets/images/red_lipstick.png', 10),
-                _buildProductCard(context, 'Vernis à ongles', 'assets/images/nail_polish.png', 15),
+              _buildProductCard(context, 'Fard à paupières', 'assets/images/eyeshadow.png', 45, screenSize),
+                _buildProductCard(context, 'Crème de nuit', 'assets/images/night_cream.png', 25, screenSize),
+                _buildProductCard(context, 'Base de maquillage', 'assets/images/makeup_base.png', 23, screenSize),
+                _buildProductCard(context, 'Pinceau à maquillage', 'assets/images/makeup_brush.png', 20, screenSize),
+                _buildProductCard(context, 'Base de maquillage', 'assets/images/makeup_base1.png', 22, screenSize),
+                _buildProductCard(context, 'Rouge à lèvres rose', 'assets/images/rose_lipstick.png', 15, screenSize),
+                _buildProductCard(context, 'Rouge à lèvres rouge', 'assets/images/red_lipstick.png', 10, screenSize),
+                _buildProductCard(context, 'Vernis à ongles', 'assets/images/nail_polish.png', 15, screenSize),
               ],
             ),
           ],
@@ -56,7 +58,7 @@ class ProductPage extends StatelessWidget {
     );
   }
 
-  Widget _buildProductCard(BuildContext context, String name, String imagePath, double price) {
+  Widget _buildProductCard(BuildContext context, String name, String imagePath, double price, Size screenSize) {
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
@@ -67,28 +69,29 @@ class ProductPage extends StatelessWidget {
         children: [
           Image.asset(
             imagePath,
-            height: 60,
-            width: 60,
+            height: screenSize.height * 0.08,
+            width: screenSize.width * 0.25,
             fit: BoxFit.cover,
           ),
-          SizedBox(height: 10),
+          SizedBox(height: screenSize.height * 0.01),
           Text(
             name,
-            style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: screenSize.width * 0.04, fontWeight: FontWeight.bold),
           ),
-          SizedBox(height: 10),
-          Text('\$$price', style: TextStyle(fontSize: 10)),
-          SizedBox(height: 6),
+          SizedBox(height: screenSize.height * 0.01),
+          Text('\$$price', style: TextStyle(fontSize: screenSize.width * 0.035)),
+          SizedBox(height: screenSize.height * 0.008),
           ElevatedButton(
             onPressed: () {
               _showCustomerInfoForm(context, name, price);
             },
-            child: Text('Acheter', style: TextStyle(color: Colors.white)),
+            child: Text('Acheter', style: TextStyle(color: Colors.white, fontSize: screenSize.width * 0.04)),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.pink,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
+              padding: EdgeInsets.symmetric(horizontal: screenSize.width * 0.04),
             ),
           ),
         ],

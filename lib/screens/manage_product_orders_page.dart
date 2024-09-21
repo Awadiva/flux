@@ -10,12 +10,13 @@ class ManageProductOrdersPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gérer les Commandes - $selectedSalon'),
+        title: Text('Gérer les Commandes - $selectedSalon', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.pink,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
-            .collection('product_orders')
-            .where('salon', isEqualTo: selectedSalon)
+            .collection('orders')  // Collection contenant les commandes
+            .where('salon', isEqualTo: selectedSalon)  // Filtrer par salon
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -32,10 +33,10 @@ class ManageProductOrdersPage extends StatelessWidget {
             itemCount: orders.length,
             itemBuilder: (context, index) {
               var order = orders[index].data() as Map<String, dynamic>;
-              String clientName = order['client_name'] ?? 'Client inconnu';
-              String productName = order['product_name'] ?? 'Produit inconnu';
-              DateTime orderDate = order['order_date'].toDate();
-              String deliveryAddress = order['delivery_address'] ?? 'Adresse non fournie';
+              String clientName = '${order['firstName']} ${order['lastName']}';
+              String productName = order['product'] ?? 'Produit inconnu';
+              DateTime orderDate = order['timestamp'].toDate();
+              String deliveryAddress = order['location'] ?? 'Adresse non fournie';
 
               return ListTile(
                 title: Text('Client: $clientName - Produit: $productName'),

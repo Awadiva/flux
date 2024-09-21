@@ -24,7 +24,7 @@ class _SalonInfoPageState extends State<SalonInfoPage> {
   }
 
   void _loadSalonInfo() async {
-    DocumentSnapshot salonSnapshot = await FirebaseFirestore.instance.collection('salons').doc(widget.salonId).get();
+    DocumentSnapshot salonSnapshot = await FirebaseFirestore.instance.collection('salons_1').doc(widget.salonId).get();
     if (salonSnapshot.exists) {
       var salonData = salonSnapshot.data() as Map<String, dynamic>;
       _nameController.text = salonData['salon_name'] ?? '';
@@ -36,7 +36,7 @@ class _SalonInfoPageState extends State<SalonInfoPage> {
 
   void _saveSalonInfo() async {
     if (_formKey.currentState!.validate()) {
-      await FirebaseFirestore.instance.collection('salons').doc(widget.salonId).set({
+      await FirebaseFirestore.instance.collection('salons_1').doc(widget.salonId).set({
         'salon_name': _nameController.text,
         'address': _addressController.text,
         'description': _descriptionController.text,

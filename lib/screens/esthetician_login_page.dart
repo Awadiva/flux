@@ -12,6 +12,7 @@ class _LoginPageState extends State<EstheticianLoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String? _selectedSalon;
   String? _errorMessage;
+  bool _obscurePassword = true; // Ajout de cette variable pour masquer/afficher le mot de passe
 
   @override
   void initState() {
@@ -41,18 +42,30 @@ class _LoginPageState extends State<EstheticianLoginPage> {
             ),
             TextField(
               controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
+              obscureText: _obscurePassword, // Utilisation de la variable pour masquer/afficher le mot de passe
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword; // Bascule entre afficher et masquer
+                    });
+                  },
+                ),
+              ),
             ),
             SizedBox(height: 20),
             _selectedSalon != null
                 ? Text('Salon sélectionné: $_selectedSalon')
                 : _errorMessage != null
-                ? Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.red),
-            )
-                : Text('Aucun salon trouvé'),
+                    ? Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red),
+                      )
+                    : Text('Aucun salon trouvé'),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _handleLogin,
@@ -74,9 +87,9 @@ class _LoginPageState extends State<EstheticianLoginPage> {
     }
 
     try {
-      // Cherche dans la collection 'clients' par email pour récupérer le salon sélectionné
+      // Cherche dans la collection 'estheticians' par email pour récupérer le salon sélectionné
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
-          .collection('clients')
+          .collection('estheticians')
           .where('email', isEqualTo: email)
           .get();
 

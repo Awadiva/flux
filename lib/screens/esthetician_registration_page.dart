@@ -11,12 +11,11 @@ class EstheticianRegistrationPage extends StatefulWidget {
 class _EstheticianRegistrationPageState extends State<EstheticianRegistrationPage> {
   String? _selectedSalonId;
   Map<String, String> _salonMap = {};
-  bool _isLoadingSalons = true; // Indicateur de chargement des salons
-
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   String _phoneNumber = '';
+  bool _obscurePassword = true; // Variable pour contrôler l'affichage du mot de passe
 
   @override
   void initState() {
@@ -24,26 +23,15 @@ class _EstheticianRegistrationPageState extends State<EstheticianRegistrationPag
     _loadSalonNames();
   }
 
-  // Fonction pour récupérer les salons de Firestore avec leurs IDs
+  // Fonction pour récupérer les salons depuis Firestore
   Future<void> _loadSalonNames() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('salons').get();
-      Map<String, String> salons = {
-        for (var doc in snapshot.docs) doc.id: doc['salon_name'] as String,
-      };
-      setState(() {
-        _salonMap = salons;
-        _isLoadingSalons = false; // Terminer le chargement des salons
-      });
-    } catch (e) {
-      // En cas d'erreur, mettre fin au chargement et afficher un message d'erreur
-      setState(() {
-        _isLoadingSalons = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors du chargement des salons.')),
-      );
-    }
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection('salons').get();
+    Map<String, String> salons = {
+      for (var doc in snapshot.docs) doc.id: doc['salon_name'] as String,
+    };
+    setState(() {
+      _salonMap = salons;
+    });
   }
 
   @override
@@ -74,28 +62,36 @@ class _EstheticianRegistrationPageState extends State<EstheticianRegistrationPag
               ),
               TextField(
                 controller: _passwordController,
-                obscureText: true,
-                decoration: InputDecoration(labelText: 'Mot de passe'),
-              ),
-              SizedBox(height: 20),
-              // Vérification de l'état de chargement des salons
-              _isLoadingSalons
-                  ? CircularProgressIndicator() // Indicateur de chargement pendant que les salons sont récupérés
-                  : DropdownButtonFormField<String>(
-                      decoration: InputDecoration(labelText: 'Choisissez un salon'),
-                      value: _selectedSalonId,
-                      items: _salonMap.entries.map((entry) {
-                        return DropdownMenuItem<String>(
-                          value: entry.key, // L'ID du salon est utilisé comme valeur
-                          child: Text(entry.value), // Le nom du salon est affiché
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        setState(() {
-                          _selectedSalonId = newValue;
-                        });
-                      },
+                obscureText: _obscurePassword, // Utilisation de la variable pour masquer ou afficher le mot de passe
+                decoration: InputDecoration(
+                  labelText: 'Mot de passe',
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword ? Icons.visibility : Icons.visibility_off,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword; // Inverse l'état d'affichage du mot de passe
+                      });
+                    },
+                  ),
+                ),
+              ),
+              DropdownButtonFormField<String>(
+                decoration: InputDecoration(labelText: 'Choisissez un salon'),
+                value: _selectedSalonId,
+                items: _salonMap.entries.map((entry) {
+                  return DropdownMenuItem<String>(
+                    value: entry.key,
+                    child: Text(entry.value),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedSalonId = newValue;
+                  });
+                },
+              ),
               SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () {
@@ -117,7 +113,6 @@ class _EstheticianRegistrationPageState extends State<EstheticianRegistrationPag
         _selectedSalonId != null &&
         _phoneNumber.isNotEmpty) {
       try {
-        // Crée un document esthéticienne dans Firestore
         DocumentReference estheticianRef = await FirebaseFirestore.instance
             .collection('estheticians')
             .add({
@@ -125,32 +120,26 @@ class _EstheticianRegistrationPageState extends State<EstheticianRegistrationPag
           'email': _emailController.text.trim(),
           'phone': _phoneNumber,
           'password': _passwordController.text.trim(),
-          'salon_id': _selectedSalonId,
+          'salonId': _selectedSalonId,
         });
 
-        // Ajoute l'ID de l'esthéticienne à la liste des esthéticiennes du salon
         await FirebaseFirestore.instance
             .collection('salons')
             .doc(_selectedSalonId)
             .update({
-          'estheticians': FieldValue.arrayUnion([estheticianRef.id]), // Ajoute l'ID de l'esthéticienne
+          'estheticians': FieldValue.arrayUnion([estheticianRef.id]),
         });
 
-        // Message de succès
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Esthéticienne inscrite avec succès!')),
         );
 
-        // Vérification supplémentaire avant de naviguer
-        if (_selectedSalonId != null) {
-          // Redirige vers la page d'accueil des esthéticiennes
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => EstheticianHome(salonId: _selectedSalonId!), // Passe l'ID du salon sélectionné
-            ),
-          );
-        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => EstheticianHome(salonId: _selectedSalonId!),
+          ),
+        );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors de l\'inscription de l\'esthéticienne.')),

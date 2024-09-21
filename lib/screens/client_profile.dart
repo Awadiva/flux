@@ -15,6 +15,8 @@ class _ClientProfileState extends State<ClientProfile> {
   final TextEditingController _emailController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  String salonName="";
   int _selectedIndex = 3; // Index pour l'onglet "Profil"
 
   @override
@@ -24,21 +26,49 @@ class _ClientProfileState extends State<ClientProfile> {
   }
 
   // Fonction pour charger les données utilisateur
-  _loadUserData() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      DocumentSnapshot snapshot =
-          await _firestore.collection('users').doc(user.uid).get();
-      _nameController.text = snapshot['name'];
-      _emailController.text = user.email ?? '';
+  // _loadUserData() async {
+  //   User? user = _auth.currentUser;
+  //   if (user != null) {
+  //     DocumentSnapshot snapshot =
+  //         await _firestore.collection('clients').doc(user.uid).get();
+  //     _nameController.text = snapshot['name'];
+  //     _emailController.text = user.email ?? '';
+  //     salonName= snapshot['salon'];
+  //   }
+  // }
+  Future<void> _loadUserData() async {
+  User? user = _auth.currentUser; // Récupérer l'utilisateur actuel
+  if (user != null) {
+    // Récupérer les informations de l'utilisateur dans la collection 'clients'
+    DocumentSnapshot snapshot = await _firestore.collection('clients').doc(user.uid).get();
+
+    // Charger les données dans les contrôleurs de texte
+    _nameController.text = snapshot['name'];
+    _emailController.text = user.email ?? '';
+
+    String salonId = snapshot['salon'];
+
+    // Requête Firebase pour récupérer le nom du salon correspondant à l'ID
+    if (salonId.isNotEmpty) {
+      DocumentSnapshot salonSnapshot = await _firestore.collection('salons').doc(salonId).get();
+
+      // Vérifier si le salon existe et récupérer son nom
+      if (salonSnapshot.exists) {
+         salonName = salonSnapshot['salon_name']; // Assurez-vous que le champ est bien 'salon_name'
+        print('Nom du salon: $salonName');
+      } else {
+        print('Salon non trouvé.');
+      }
     }
   }
+}
+
 
   // Fonction pour mettre à jour le profil
   _updateProfile() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      await _firestore.collection('users').doc(user.uid).update({
+      await _firestore.collection('clients').doc(user.uid).update({
         'name': _nameController.text,
         'email': _emailController.text,
       });
@@ -58,19 +88,19 @@ class _ClientProfileState extends State<ClientProfile> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ClientHome()),
+          MaterialPageRoute(builder: (context) => ClientHome(selectedSalon:salonName ,)),
         );
         break;
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => NotificationsPage()),
+          MaterialPageRoute(builder: (context) => NotificationsPage(salonName: salonName,)),
         );
         break;
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ReviewsPage()),
+          MaterialPageRoute(builder: (context) => ReviewsPage(selectedSalon: salonName,)),
         );
         break;
       case 3:
@@ -93,7 +123,7 @@ class _ClientProfileState extends State<ClientProfile> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ClientHome()),
+              MaterialPageRoute(builder: (context) => ClientHome(selectedSalon: salonName,)),
             );
           },
         ),

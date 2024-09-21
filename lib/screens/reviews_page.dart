@@ -2,35 +2,41 @@ import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'client_home.dart'; 
+import 'client_home.dart';
 import 'notifications_page.dart';
 import 'client_profile.dart';
 
 class ReviewsPage extends StatefulWidget {
+  final String selectedSalon;
+
+  ReviewsPage({required this.selectedSalon});
   @override
   _ReviewsPageState createState() => _ReviewsPageState();
 }
 
 class _ReviewsPageState extends State<ReviewsPage> {
-  double _rating = 0.0; 
+  double _rating = 0.0;
   final TextEditingController _commentController = TextEditingController();
-  int _selectedIndex = 2; 
+  int _selectedIndex = 2;
 
-  String? _clientName; 
+  String? _clientName;
 
   @override
   void initState() {
     super.initState();
-    _fetchClientName(); 
+    _fetchClientName();
   }
 
   Future<void> _fetchClientName() async {
     User? user = FirebaseAuth.instance.currentUser;
 
     if (user != null) {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
+      DocumentSnapshot userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
       setState(() {
-        _clientName = userDoc['name']; 
+        _clientName = userDoc['name'];
       });
     }
   }
@@ -68,19 +74,28 @@ class _ReviewsPageState extends State<ReviewsPage> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ClientHome()),
+          MaterialPageRoute(
+              builder: (context) => ClientHome(
+                    selectedSalon: widget.selectedSalon,
+                  )),
         );
         break;
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => NotificationsPage()),
+          MaterialPageRoute(
+              builder: (context) => NotificationsPage(
+                    salonName: widget.selectedSalon,
+                  )),
         );
         break;
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ReviewsPage()),
+          MaterialPageRoute(
+              builder: (context) => ReviewsPage(
+                    selectedSalon: widget.selectedSalon,
+                  )),
         );
         break;
       case 3:
@@ -96,14 +111,17 @@ class _ReviewsPageState extends State<ReviewsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Laisser un avis',style: TextStyle(color: Colors.white)),
+        title: Text('Laisser un avis', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.pink,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => ClientHome()),
+              MaterialPageRoute(
+                  builder: (context) => ClientHome(
+                        selectedSalon: widget.selectedSalon,
+                      )),
             );
           },
         ),
@@ -127,7 +145,7 @@ class _ReviewsPageState extends State<ReviewsPage> {
               ),
               onRatingUpdate: (rating) {
                 setState(() {
-                  _rating = rating; 
+                  _rating = rating;
                 });
               },
             ),
@@ -143,12 +161,16 @@ class _ReviewsPageState extends State<ReviewsPage> {
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _submitReview,
-              child: Text('Soumettre l\'avis',style: TextStyle(color: Colors.white)),
+              child: Text('Soumettre l\'avis',
+                  style: TextStyle(color: Colors.white)),
             ),
             SizedBox(height: 20),
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance.collection('reviews').orderBy('timestamp', descending: true).snapshots(),
+                stream: FirebaseFirestore.instance
+                    .collection('reviews')
+                    .orderBy('timestamp', descending: true)
+                    .snapshots(),
                 builder: (context, snapshot) {
                   if (!snapshot.hasData) {
                     return Center(child: CircularProgressIndicator());

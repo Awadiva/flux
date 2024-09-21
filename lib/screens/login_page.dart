@@ -12,6 +12,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String? _selectedSalon;
   String? _errorMessage;
+  bool _obscurePassword =
+      true; // Variable pour contrôler l'affichage du mot de passe
 
   @override
   void initState() {
@@ -41,18 +43,32 @@ class _LoginPageState extends State<LoginPage> {
             ),
             TextField(
               controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
+              obscureText:
+                  _obscurePassword, // Utilisation de la variable pour masquer ou afficher le mot de passe
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword =
+                          !_obscurePassword; // Inverse l'état d'affichage du mot de passe
+                    });
+                  },
+                ),
+              ),
             ),
             SizedBox(height: 20),
             _selectedSalon != null
                 ? Text('Salon sélectionné: $_selectedSalon')
                 : _errorMessage != null
-                ? Text(
-              _errorMessage!,
-              style: TextStyle(color: Colors.red),
-            )
-                : Text('Aucun salon trouvé'),
+                    ? Text(
+                        _errorMessage!,
+                        style: TextStyle(color: Colors.red),
+                      )
+                    : Text('Aucun salon trouvé'),
             SizedBox(height: 20),
             ElevatedButton(
               onPressed: _handleLogin,
@@ -73,6 +89,35 @@ class _LoginPageState extends State<LoginPage> {
       return;
     }
 
+    // try {
+    //   // Cherche dans la collection 'clients' par email pour récupérer le salon sélectionné
+    //   QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+    //       .collection('clients')
+    //       .where('email', isEqualTo: email)
+    //       .get();
+
+    //   if (querySnapshot.docs.isNotEmpty) {
+    //     var clientData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+
+    //     String? salonId = clientData['salon'];
+
+    //     setState(() {
+    //       _selectedSalon = clientData['salon'] ?? 'Salon inconnu';
+    //       _errorMessage = null;
+    //     });
+    //   } else {
+    //     setState(() {
+    //       _selectedSalon = null;
+    //       _errorMessage = 'Aucun salon trouvé pour cet email';
+    //     });
+    //   }
+    // } catch (e) {
+    //   setState(() {
+    //     _selectedSalon = null;
+    //     _errorMessage = 'Erreur lors de la récupération du salon';
+    //   });
+    //   print('Erreur lors de la récupération du salon pour l\'email: $e');
+    // }
     try {
       // Cherche dans la collection 'clients' par email pour récupérer le salon sélectionné
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
@@ -81,21 +126,48 @@ class _LoginPageState extends State<LoginPage> {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        var clientData = querySnapshot.docs.first.data() as Map<String, dynamic>;
-        setState(() {
-          _selectedSalon = clientData['salon'] ?? 'Salon inconnu';
-          _errorMessage = null;
-        });
+        var clientData =
+            querySnapshot.docs.first.data() as Map<String, dynamic>;
+
+        String? salonId = clientData['salon'];
+
+        if (salonId != null && salonId.isNotEmpty) {
+          // Requête pour récupérer les informations du salon correspondant à l'ID salon
+          DocumentSnapshot salonSnapshot = await FirebaseFirestore.instance
+              .collection('salons')
+              .doc(salonId)
+              .get();
+
+          if (salonSnapshot.exists) {
+            var salonData = salonSnapshot.data() as Map<String, dynamic>;
+
+            setState(() {
+              _selectedSalon = salonData['salon_name'] ??
+                  'Nom du salon inconnu'; // Utilise le nom du salon récupéré
+              _errorMessage = null;
+            });
+          } else {
+            setState(() {
+              _selectedSalon = null;
+              _errorMessage = 'Le salon avec cet ID est introuvable';
+            });
+          }
+        } else {
+          setState(() {
+            _selectedSalon = 'Aucun salon sélectionné';
+            _errorMessage = 'Le client n\'a pas de salon attribué';
+          });
+        }
       } else {
         setState(() {
           _selectedSalon = null;
-          _errorMessage = 'Aucun salon trouvé pour cet email';
+          _errorMessage = 'Aucun client trouvé pour cet email';
         });
       }
     } catch (e) {
       setState(() {
         _selectedSalon = null;
-        _errorMessage = 'Erreur lors de la récupération du salon';
+        _errorMessage = 'Erreur lors de la récupération des données : $e';
       });
       print('Erreur lors de la récupération du salon pour l\'email: $e');
     }
@@ -109,11 +181,13 @@ class _LoginPageState extends State<LoginPage> {
       // Rediriger vers ClientHomePage après la connexion réussie
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => ClientHome()),
+        MaterialPageRoute(builder: (context) => ClientHome(selectedSalon:_selectedSalon! ,)),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veuillez entrer un email valide ou un mot de passe correct.')),
+        SnackBar(
+            content: Text(
+                'Veuillez entrer un email valide ou un mot de passe correct.')),
       );
     }
   }

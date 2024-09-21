@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
-import 'client_home.dart'; // Import the client home page
-import 'manage_clients_page.dart'; // Import the ManageClientsPage
+import 'client_home.dart'; // Import de la page d'accueil du client
 
 class RegisterClientPage extends StatefulWidget {
   @override
@@ -13,8 +12,9 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  String? _selectedSalonId; // Use the salon ID instead of name
+  String? _selectedSalonId; // ID du salon sélectionné
   String _phoneNumber = '';
+  bool _obscurePassword = true; // Variable pour masquer/afficher le mot de passe
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +45,20 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
             ),
             TextField(
               controller: _passwordController,
-              obscureText: true,
-              decoration: InputDecoration(labelText: 'Mot de passe'),
+              obscureText: _obscurePassword, // Utilisation de la variable pour masquer/afficher
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscurePassword = !_obscurePassword; // Inverse l'état de l'icône œil
+                    });
+                  },
+                ),
+              ),
             ),
             SizedBox(height: 20),
             FutureBuilder<List<QueryDocumentSnapshot>>(
@@ -64,7 +76,7 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
                     hint: Text('Choisissez un salon'),
                     items: snapshot.data!.map((salonDoc) {
                       return DropdownMenuItem<String>(
-                        value: salonDoc.id, // Use document ID
+                        value: salonDoc.id, // Utiliser l'ID du document
                         child: Text(salonDoc['salon_name']),
                       );
                     }).toList(),
@@ -94,15 +106,66 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
   Future<List<QueryDocumentSnapshot>> _fetchSalonDocs() async {
     try {
       QuerySnapshot snapshot =
-      await FirebaseFirestore.instance.collection('salons').get();
+          await FirebaseFirestore.instance.collection('salons').get();
       return snapshot.docs;
     } catch (e) {
-      print('Error fetching salons: $e');
+      print('Erreur lors de la récupération des salons: $e');
       return [];
     }
   }
 
   // Fonction pour enregistrer un nouveau client
+  // Future<void> _registerClient(BuildContext context) async {
+  //   if (_nameController.text.isNotEmpty &&
+  //       _phoneNumber.isNotEmpty &&
+  //       _emailController.text.isNotEmpty &&
+  //       _passwordController.text.isNotEmpty &&
+  //       _selectedSalonId != null) {
+  //     try {
+  //       // Crée un document client dans Firestore
+  //       DocumentReference clientRef =
+  //           await FirebaseFirestore.instance.collection('clients').add({
+  //         'name': _nameController.text.trim(),
+  //         'phone': _phoneNumber,
+  //         'email': _emailController.text.trim(),
+  //         'password': _passwordController.text.trim(),
+  //         'salon': _selectedSalonId, // Associer le client au salon sélectionné
+  //       });
+
+  //       // Ajoute le client à la liste des clients du salon sélectionné
+  //       await FirebaseFirestore.instance
+  //           .collection('salons')
+  //           .doc(_selectedSalonId) // Utilise l'ID du salon
+  //           .update({
+  //         'clients': FieldValue.arrayUnion([clientRef.id]),
+  //       });
+
+  //       // Message de succès
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Client inscrit avec succès!')),
+  //       );
+
+        
+  //       // Redirection vers la page d'accueil du client
+  //       Navigator.pushReplacement(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (context) => ClientHome(selectedSalon: ,),
+  //         ),
+  //       );
+  //     } catch (e) {
+  //       print('Erreur lors de l\'inscription: $e');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Erreur lors de l\'inscription du client.')),
+  //       );
+  //     }
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Veuillez remplir tous les champs.')),
+  //     );
+  //   }
+  // }
+   // Register a new client
   Future<void> _registerClient(BuildContext context) async {
     if (_nameController.text.isNotEmpty &&
         _phoneNumber.isNotEmpty &&
@@ -110,44 +173,28 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
         _passwordController.text.isNotEmpty &&
         _selectedSalonId != null) {
       try {
-        // Crée un document client dans Firestore
-        DocumentReference clientRef =
-        await FirebaseFirestore.instance.collection('clients').add({
+        // Create a client document in Firestore
+        DocumentReference clientRef = await FirebaseFirestore.instance.collection('clients').add({
           'name': _nameController.text.trim(),
           'phone': _phoneNumber,
           'email': _emailController.text.trim(),
           'password': _passwordController.text.trim(),
-          'salon': _selectedSalonId,
+          'salon': _selectedSalonId, // Associate the client with the selected salon
         });
 
-        // Ajoute le client à la liste des clients du salon sélectionné
-        await FirebaseFirestore.instance
-            .collection('salons')
-            .doc(_selectedSalonId) // Utilise l'ID du salon
-            .update({
+        // Add the client to the selected salon's list of clients
+        await FirebaseFirestore.instance.collection('salons').doc(_selectedSalonId).update({
           'clients': FieldValue.arrayUnion([clientRef.id]),
         });
 
-        // Message de succès
+        // Success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Client inscrit avec succès!')),
         );
 
-        // Redirection vers ClientHome
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ClientHome(),
-          ),
-        );
+        // Fetch the salon's name and navigate to ClientHome
+        await _navigateToClientHome(context);
 
-        // Redirection vers ManageClientsPage après inscription réussie
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ManageClientsPage(salonId: _selectedSalonId!),
-          ),
-        );
       } catch (e) {
         print('Erreur lors de l\'inscription: $e');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -160,4 +207,36 @@ class _RegisterClientPageState extends State<RegisterClientPage> {
       );
     }
   }
+
+  // Navigate to ClientHome with the selected salon's name
+  Future<void> _navigateToClientHome(BuildContext context) async {
+    try {
+      // Fetch the salon document to retrieve its name
+      DocumentSnapshot salonSnapshot =
+          await FirebaseFirestore.instance.collection('salons').doc(_selectedSalonId).get();
+
+      if (salonSnapshot.exists) {
+        String salonName = salonSnapshot['salon_name'];
+
+        // Navigate to ClientHome and pass the salon's name
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ClientHome(selectedSalon: salonName),
+          ),
+        );
+      } else {
+        print('Salon introuvable');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Salon introuvable.')),
+        );
+      }
+    } catch (e) {
+      print('Erreur lors de la navigation vers ClientHome: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la navigation vers la page d\'accueil du client.')),
+      );
+    }
+  }
+
 }

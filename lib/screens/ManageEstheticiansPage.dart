@@ -46,11 +46,12 @@ class ManageEstheticiansPage extends StatelessWidget {
               var estheticianData = estheticians[index].data() as Map<String, dynamic>;
               String name = estheticianData['name'] ?? 'Nom non disponible';
               String email = estheticianData['email'] ?? 'Email non disponible';
+              String phone = estheticianData['phone'] ?? 'Téléphone non disponible';
 
               return ListTile(
                 leading: Icon(Icons.person, color: Colors.pink),
                 title: Text(name),
-                subtitle: Text(email),
+                subtitle: Text('Email: $email\nTéléphone: $phone'),
                 trailing: IconButton(
                   icon: Icon(Icons.edit, color: Colors.pink),
                   onPressed: () {

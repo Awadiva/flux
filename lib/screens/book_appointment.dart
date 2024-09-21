@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
-import 'payment_page.dart'; // Assurez-vous d'importer correctement la page PaymentPage
+import 'payment_page.dart';
 
 class BookAppointmentPage extends StatefulWidget {
   final Map<String, String>? customerInfo;
 
-  BookAppointmentPage({this.customerInfo});
+  final String salonId; // ID du salon
+
+  BookAppointmentPage({
+    this.customerInfo,
+    required this.salonId, // salonId est maintenant ici
+  });
 
   @override
   _BookAppointmentPageState createState() => _BookAppointmentPageState();
@@ -40,11 +45,16 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
 
   void _fetchServices() async {
     try {
-      var serviceSnapshots = await FirebaseFirestore.instance.collection('services').get();
+      var serviceSnapshots = await FirebaseFirestore.instance
+          .collection('services')
+          .where('salon_id',
+              isEqualTo: widget.salonId) // Filtrer par ID de salon
+          .get();
       setState(() {
         services = serviceSnapshots.docs.map((doc) {
           return {
-            'name': doc.data().containsKey('name') ? doc['name'] : 'Service inconnu',
+            'name':
+                doc.data().containsKey('nom') ? doc['nom'] : 'Service inconnu',
             'selected': false,
           };
         }).toList();
@@ -71,7 +81,9 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
         'services': selectedServices,
         'status': 'en attente',
         'created_at': DateTime.now(),
+        'salon_id': widget.salonId,
       });
+
       print("Rendez-vous sauvegardé avec succès");
     } catch (e) {
       print("Erreur lors de la sauvegarde du rendez-vous: $e");
@@ -84,6 +96,8 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
           .collection('appointments')
           .where('date', isEqualTo: _dateController.text)
           .where('time', isEqualTo: _timeController.text)
+          .where('salon_id',
+              isEqualTo: widget.salonId) // Vérifier pour le salon sélectionné
           .get();
 
       return appointments.docs.isNotEmpty;
@@ -98,31 +112,36 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: conflictExists ? Text('Conflit de Rendez-vous') : Text('Pas de Conflit'),
+          title: conflictExists
+              ? Text('Conflit de Rendez-vous')
+              : Text('Pas de Conflit'),
           content: conflictExists
-              ? Text('Un rendez-vous a déjà été pris pour cette date et heure. Voulez-vous choisir une autre date ?')
-              : Text('Aucun rendez-vous trouvé pour cette date et heure. Vous pouvez continuer au paiement.'),
+              ? Text(
+                  'Un rendez-vous a déjà été pris pour cette date et heure. Voulez-vous choisir une autre date ?')
+              : Text(
+                  'Aucun rendez-vous trouvé pour cette date et heure. Vous pouvez continuer au paiement.'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 if (conflictExists) {
-                  // Si un conflit existe, on retourne à la page actuelle pour choisir une autre date
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => BookAppointmentPage(customerInfo: widget.customerInfo)),
+                    MaterialPageRoute(
+                        builder: (context) => BookAppointmentPage(
+                            customerInfo: widget.customerInfo,
+                            salonId: widget.salonId)),
                   );
                 }
               },
               child: Text('Retour'),
             ),
-            if (!conflictExists) // Si aucun conflit, on redirige vers la page de paiement
+            if (!conflictExists)
               TextButton(
                 onPressed: () async {
                   Navigator.pop(context);
-                  await _saveAppointment(); // Sauvegarde le rendez-vous
+                  await _saveAppointment();
 
-                  // Rediriger vers la page de paiement
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -130,13 +149,13 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                         selectedServices: services
                             .where((service) => service['selected'] as bool)
                             .map((service) => service['name'].toString())
-                            .toList(), // Liste des services sélectionnés
+                            .toList(),
                         customerInfo: {
                           'first_name': _firstNameController.text,
                           'last_name': _lastNameController.text,
                           'email': _emailController.text,
                           'phone': _phoneController.text,
-                        }, // Informations du client
+                        },
                       ),
                     ),
                   );
@@ -149,7 +168,6 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     );
   }
 
-
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -157,7 +175,8 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Réserver un Rendez-vous', style: TextStyle(color: Colors.white)),
+        title: Text('Réserver un Rendez-vous pour ${widget.salonId}',
+            style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.pink,
       ),
       body: Padding(
@@ -229,7 +248,8 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                               if (value == null || value.isEmpty) {
                                 return 'Veuillez entrer votre email';
                               }
-                              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                              if (!RegExp(r'^[^@]+@[^@]+\.[^@]+')
+                                  .hasMatch(value)) {
                                 return 'Veuillez entrer un email valide';
                               }
                               return null;
@@ -264,20 +284,19 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                                   readOnly: true,
                                   onTap: () async {
                                     FocusScope.of(context).unfocus();
-
                                     DateTime? pickedDate = await showDatePicker(
                                       context: context,
                                       initialDate: DateTime.now(),
-                                      firstDate: DateTime.now(), // Date de début à partir d'aujourd'hui
+                                      firstDate: DateTime.now(),
                                       lastDate: DateTime(2101),
                                     );
 
                                     if (pickedDate != null) {
                                       setState(() {
-                                        _dateController.text = DateFormat('yyyy-MM-dd').format(pickedDate);
+                                        _dateController.text =
+                                            DateFormat('yyyy-MM-dd')
+                                                .format(pickedDate);
                                       });
-                                    } else {
-                                      print("Aucune date sélectionnée.");
                                     }
                                   },
                                   validator: (value) {
@@ -300,13 +319,15 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                                   readOnly: true,
                                   onTap: () async {
                                     FocusScope.of(context).unfocus();
-                                    TimeOfDay? pickedTime = await showTimePicker(
+                                    TimeOfDay? pickedTime =
+                                        await showTimePicker(
                                       context: context,
                                       initialTime: TimeOfDay.now(),
                                     );
                                     if (pickedTime != null) {
                                       setState(() {
-                                        _timeController.text = pickedTime.format(context);
+                                        _timeController.text =
+                                            pickedTime.format(context);
                                       });
                                     }
                                   },
@@ -323,7 +344,8 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                           SizedBox(height: spacing),
                           Text(
                             'Sélectionnez un ou plusieurs services :',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                           SizedBox(height: spacing),
                           Column(
@@ -344,22 +366,31 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.pink,
-                                padding: EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                                padding: EdgeInsets.symmetric(
+                                    vertical: 12, horizontal: 20),
                               ),
                               onPressed: () async {
                                 if (_formKey.currentState!.validate() &&
-                                    services.where((service) => service['selected'] as bool).isNotEmpty) {
-                                  bool conflictExists = await _checkForExistingAppointments();
-                                  _showExistingAppointmentsDialog(conflictExists);
+                                    services
+                                        .where((service) =>
+                                            service['selected'] as bool)
+                                        .isNotEmpty) {
+                                  bool conflictExists =
+                                      await _checkForExistingAppointments();
+                                  _showExistingAppointmentsDialog(
+                                      conflictExists);
                                 } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                    content: Text('Veuillez remplir tous les champs obligatoires et sélectionner au moins un service.'),
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(SnackBar(
+                                    content: Text(
+                                        'Veuillez remplir tous les champs obligatoires et sélectionner au moins un service.'),
                                   ));
                                 }
                               },
                               child: Text(
                                 'Procéder au Paiement',
-                                style: TextStyle(fontSize: 18, color: Colors.white),
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.white),
                               ),
                             ),
                           ),

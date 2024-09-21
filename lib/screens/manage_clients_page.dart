@@ -10,7 +10,7 @@ class ManageClientsPage extends StatelessWidget {
   Future<QuerySnapshot> _getClientsForSalon() async {
     return FirebaseFirestore.instance
         .collection('clients')
-        .where('salonId', isEqualTo: salonId) // Filtrer par salonId
+        .where('salon', isEqualTo: salonId) // Filtrer par salonId
         .get();
   }
 

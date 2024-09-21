@@ -48,11 +48,11 @@ class MyApp extends StatelessWidget {
           final String salonId = ModalRoute.of(context)!.settings.arguments as String;
           return AdminDashboardPage(salonId: salonId);
         },
-        // EstheticianHomePage: Ensure selectedSalon is passed
+        // EstheticianHomePage: Ensure salonId is passed
         '/estheticianHome': (context) {
           final String? salonId = ModalRoute.of(context)!.settings.arguments as String?;
           if (salonId != null) {
-            return EstheticianHome(salonId: salonId); // Use salonId instead of selectedSalon
+            return EstheticianHome(salonId: salonId);
           } else {
             return Scaffold(
               body: Center(
@@ -61,9 +61,21 @@ class MyApp extends StatelessWidget {
             );
           }
         },
-        '/clientHome': (context) => ClientHome(),
-        '/bookAppointment': (context) => BookAppointmentPage(),
-        '/messages': (context) => NotificationsPage(),
+        // '/clientHome': (context) => ClientHome(),
+        // Correction de la route pour passer salonId en tant qu'argument
+        '/bookAppointment': (context) {
+          final String? salonId = ModalRoute.of(context)!.settings.arguments as String?;
+          if (salonId != null) {
+            return BookAppointmentPage(salonId: salonId); // Assurez-vous que salonId est correctement passé ici
+          } else {
+            return Scaffold(
+              body: Center(
+                child: Text('Salon non sélectionné. Veuillez sélectionner un salon avant de réserver.'),
+              ),
+            );
+          }
+        },
+        // '/messages': (context) => NotificationsPage(),
       },
     );
   }

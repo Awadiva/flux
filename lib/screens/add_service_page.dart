@@ -23,18 +23,26 @@ class _AddServicePageState extends State<AddServicePage> {
   File? _imageFile;
   final ImagePicker _picker = ImagePicker();
 
-  final List<String> categories = ['Maquillage', 'Coiffure', 'Soins des ongles', 'Cosmétologie', 'Procédures SPA'];
+  final List<String> categories = [
+    'Maquillage',
+    'Coiffure',
+    'Soins des ongles',
+    'Cosmétologie',
+    'Procédures SPA'
+  ];
 
   // Fonction pour sélectionner une image depuis la galerie ou prendre une photo via la caméra
   Future<void> _pickImage() async {
     if (kIsWeb) {
       // Utiliser file_picker pour les plateformes web et desktop
-      FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.image);
+      FilePickerResult? result =
+          await FilePicker.platform.pickFiles(type: FileType.image);
 
       if (result != null && result.files.single.bytes != null) {
         // Pour le web, utiliser les bytes (données binaires) au lieu d'un fichier File
         setState(() {
-          _imageFile = File(result.files.single.path!); // Cela fonctionne pour le desktop
+          _imageFile = File(
+              result.files.single.path!); // Cela fonctionne pour le desktop
         });
       }
     } else {
@@ -50,26 +58,30 @@ class _AddServicePageState extends State<AddServicePage> {
                   leading: Icon(Icons.photo_library),
                   title: Text('Choisir depuis la galerie'),
                   onTap: () async {
-                    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+                    final pickedFile =
+                        await _picker.pickImage(source: ImageSource.gallery);
                     if (pickedFile != null) {
                       setState(() {
                         _imageFile = File(pickedFile.path);
                       });
                     }
-                    Navigator.pop(context); // Fermer le bottom sheet après sélection
+                    Navigator.pop(
+                        context); // Fermer le bottom sheet après sélection
                   },
                 ),
                 ListTile(
                   leading: Icon(Icons.camera_alt),
                   title: Text('Prendre une photo'),
                   onTap: () async {
-                    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+                    final pickedFile =
+                        await _picker.pickImage(source: ImageSource.camera);
                     if (pickedFile != null) {
                       setState(() {
                         _imageFile = File(pickedFile.path);
                       });
                     }
-                    Navigator.pop(context); // Fermer le bottom sheet après sélection
+                    Navigator.pop(
+                        context); // Fermer le bottom sheet après sélection
                   },
                 ),
               ],
@@ -85,30 +97,18 @@ class _AddServicePageState extends State<AddServicePage> {
       _formKey.currentState!.save();
 
       // Téléchargement de l'image vers Firebase Storage
-      String imageUrl = '';
-      if (_imageFile != null) {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('salon_services_images')
-            .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
-        await storageRef.putFile(_imageFile!);
-        imageUrl = await storageRef.getDownloadURL();
-      }
 
       // Enregistrer le service dans Firestore
-      await FirebaseFirestore.instance
-          .collection('salons')
-          .doc(widget.salonId)
-          .collection('services')
-          .add({
+      await FirebaseFirestore.instance.collection('services').add({
         'nom': _serviceName,
-        'categorie': _serviceCategory,
+        'salon_id': widget.salonId,
+        'category': _serviceCategory,
         'prix': _servicePrice,
-        'imageUrl': imageUrl, // Lien de l'image téléchargée
       });
 
       // Message de confirmation
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Service ajouté avec succès')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Service ajouté avec succès')));
 
       // Remettre à zéro le formulaire
       _formKey.currentState!.reset();
@@ -150,7 +150,8 @@ class _AddServicePageState extends State<AddServicePage> {
                       child: Text(category),
                     );
                   }).toList(),
-                  onChanged: (value) => setState(() => _serviceCategory = value!),
+                  onChanged: (value) =>
+                      setState(() => _serviceCategory = value!),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Veuillez sélectionner une catégorie';
@@ -159,7 +160,7 @@ class _AddServicePageState extends State<AddServicePage> {
                   },
                 ),
                 TextFormField(
-                  decoration: InputDecoration(labelText: 'Prix (€)'),
+                  decoration: InputDecoration(labelText: 'Prix (\$)'),
                   keyboardType: TextInputType.number,
                   validator: (value) {
                     if (value == null || double.tryParse(value) == null) {
@@ -170,16 +171,6 @@ class _AddServicePageState extends State<AddServicePage> {
                   onSaved: (value) => _servicePrice = double.parse(value!),
                 ),
                 SizedBox(height: 10),
-                GestureDetector(
-                  onTap: _pickImage,
-                  child: _imageFile == null
-                      ? Container(
-                          height: 150,
-                          color: Colors.grey[200],
-                          child: Icon(Icons.camera_alt, size: 50),
-                        )
-                      : Image.file(_imageFile!, height: 150, fit: BoxFit.cover),
-                ),
                 SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _addService,

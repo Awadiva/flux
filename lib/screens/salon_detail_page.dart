@@ -131,20 +131,19 @@ class SalonDetailPage extends StatelessWidget {
   }
 
   // Fonction pour afficher le formulaire de connexion admin
- void _showAdminLogin(BuildContext context) {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => AdminLoginPage(
-        salonId: salonId, // Passer l'ID du salon
-        onLoginSuccess: () {
-          _showMenuOptions(context); // Si la connexion réussit, afficher le menu des options
-        },
+  void _showAdminLogin(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AdminLoginPage(
+          salonId: salonId, // Passer l'ID du salon
+          onLoginSuccess: () {
+            _showMenuOptions(context); // Si la connexion réussit, afficher le menu des options
+          },
+        ),
       ),
-    ),
-  );
-}
-
+    );
+  }
 
   // Afficher le menu des options après la connexion réussie
   void _showMenuOptions(BuildContext context) {

@@ -21,7 +21,10 @@ class HomePage1 extends StatelessWidget {
             Image.asset('assets/images/logo.png', height: 40),
             Text(
               'FluxSpa',
-              style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold, color: Colors.black),
+              style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black),
             ),
             Image.asset('assets/images/logo.png', height: 40),
           ],
@@ -38,12 +41,18 @@ class HomePage1 extends StatelessWidget {
                 style: TextStyle(color: Colors.white, fontSize: 24),
               ),
             ),
-            _buildDrawerItem(Icons.store, 'Ajouter un salon', AddSalonPage(), context),
-            _buildDrawerItem(Icons.list, 'Liste des salons', SalonListPage(), context),
-            _buildDrawerItem(Icons.account_circle, 'Ajouter une esthéticienne', EstheticianPage(), context),
-            _buildDrawerItem(Icons.calendar_today, 'Prendre rendez-vous', AppointmentPage(), context),
+            _buildDrawerItem(
+                Icons.store, 'Ajouter un salon', AddSalonPage(), context),
+            _buildDrawerItem(
+                Icons.list, 'Liste des salons', SalonListPage(), context),
+            _buildDrawerItem(Icons.account_circle, 'Ajouter une esthéticienne',
+                EstheticianPage(), context),
+            _buildDrawerItem(Icons.calendar_today, 'Prendre rendez-vous',
+                AppointmentPage(), context),
             _buildDrawerItem(Icons.info, 'À propos', AboutPage(), context),
-            _buildDrawerItem(Icons.share, 'Partager l\'application', null, context, shareApp: true),
+            _buildDrawerItem(
+                Icons.share, 'Partager l\'application', null, context,
+                shareApp: true),
             ListTile(
               leading: Icon(Icons.exit_to_app),
               title: Text('Déconnexion'),
@@ -59,18 +68,22 @@ class HomePage1 extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Image.asset('assets/images/accueil.jpg', height: 300, width: double.infinity, fit: BoxFit.cover),
+            Image.asset('assets/images/accueil.jpg',
+                height: 300, width: double.infinity, fit: BoxFit.cover),
             SizedBox(height: 16),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Text(
                 'L\'élégance, c\'est d\'être aussi belle à l\'intérieur qu\'à l\'extérieur',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+                style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87),
                 textAlign: TextAlign.center,
               ),
             ),
             // Autres widgets
-                // Ligne d'images de services
+            // Ligne d'images de services
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Row(
@@ -79,7 +92,8 @@ class HomePage1 extends StatelessWidget {
                   _buildServiceItem('assets/images/makeup1.jpg', 'Maquillage'),
                   _buildServiceItem('assets/images/hair.jpg', 'Coiffure'),
                   _buildServiceItem('assets/images/manicure1.jpg', 'Manucure'),
-                  _buildServiceItem('assets/images/facial.jpg', 'Soin du visage'),
+                  _buildServiceItem(
+                      'assets/images/facial.jpg', 'Soin du visage'),
                 ],
               ),
             ),
@@ -92,7 +106,7 @@ class HomePage1 extends StatelessWidget {
                 children: [
                   // Image à gauche
                   Image.asset(
-                    'assets/images/bp.png',  // Remplacez par votre propre image
+                    'assets/images/bp.png', // Remplacez par votre propre image
                     height: 250,
                     width: 150,
                     fit: BoxFit.cover,
@@ -142,18 +156,24 @@ class HomePage1 extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildProductItem('assets/images/crème.png', 'Crème hydratante'),
-                      _buildProductItem('assets/images/Shampooing.png', 'Shampooing revitalisant'),
-                      _buildProductItem('assets/images/serum.png', 'Sérum anti-âge'),
+                      _buildProductItem(
+                          'assets/images/crème.png', 'Crème hydratante'),
+                      _buildProductItem('assets/images/Shampooing.png',
+                          'Shampooing revitalisant'),
+                      _buildProductItem(
+                          'assets/images/serum.png', 'Sérum anti-âge'),
                     ],
                   ),
                   SizedBox(height: 16),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildProductItem('assets/images/lotion1.png', 'Lotion tonique'),
-                      _buildProductItem('assets/images/huile.png', 'Huile de massage'),
-                      _buildProductItem('assets/images/baume.png', 'Baume à lèvres'),
+                      _buildProductItem(
+                          'assets/images/lotion1.png', 'Lotion tonique'),
+                      _buildProductItem(
+                          'assets/images/huile.png', 'Huile de massage'),
+                      _buildProductItem(
+                          'assets/images/baume.png', 'Baume à lèvres'),
                     ],
                   ),
                 ],
@@ -220,23 +240,22 @@ class HomePage1 extends StatelessWidget {
         ),
       ],
     );
-        
   }
-          
-  }
+}
 
-  ListTile _buildDrawerItem(IconData icon, String title, Widget? page, BuildContext context, {bool shareApp = false}) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      onTap: () {
-        Navigator.pop(context);
-        if (shareApp) {
-          ShareService().shareApp();
-        } else {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => page!));
-        }
-      },
-    );
-  }
-
+ListTile _buildDrawerItem(
+    IconData icon, String title, Widget? page, BuildContext context,
+    {bool shareApp = false}) {
+  return ListTile(
+    leading: Icon(icon),
+    title: Text(title),
+    onTap: () {
+      Navigator.pop(context);
+      if (shareApp) {
+        ShareService().shareApp();
+      } else {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page!));
+      }
+    },
+  );
+}
