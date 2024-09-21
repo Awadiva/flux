@@ -12,7 +12,45 @@ class _LoginPageState extends State<EstheticianLoginPage> {
   final TextEditingController _passwordController = TextEditingController();
   String? _selectedSalon;
   String? _errorMessage;
-  bool _obscurePassword = true; // Ajout de cette variable pour masquer/afficher le mot de passe
+  String? salonName;
+  bool _obscurePassword =
+      true; // Ajout de cette variable pour masquer/afficher le mot de passe
+  Future<void> _fetchSalonName(String salonId) async {
+    if (salonId.isEmpty) {
+      setState(() {
+        _selectedSalon = null;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    try {
+      // Effectue une requête sur Firestore pour obtenir les détails du salon
+      DocumentSnapshot salonSnapshot = await FirebaseFirestore.instance
+          .collection('salons')
+          .doc(salonId)
+          .get();
+
+      if (salonSnapshot.exists) {
+        var salonData = salonSnapshot.data() as Map<String, dynamic>;
+        setState(() {
+          salonName = salonData['salon_name'] ?? 'Nom du salon inconnu';
+          _errorMessage = null;
+        });
+      } else {
+        setState(() {
+          salonName = null;
+          _errorMessage = 'Salon non trouvé';
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _selectedSalon = null;
+        _errorMessage = 'Erreur lors de la récupération du nom du salon';
+      });
+      print('Erreur lors de la récupération du salon: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -42,7 +80,8 @@ class _LoginPageState extends State<EstheticianLoginPage> {
             ),
             TextField(
               controller: _passwordController,
-              obscureText: _obscurePassword, // Utilisation de la variable pour masquer/afficher le mot de passe
+              obscureText:
+                  _obscurePassword, // Utilisation de la variable pour masquer/afficher le mot de passe
               decoration: InputDecoration(
                 labelText: 'Mot de passe',
                 suffixIcon: IconButton(
@@ -51,7 +90,8 @@ class _LoginPageState extends State<EstheticianLoginPage> {
                   ),
                   onPressed: () {
                     setState(() {
-                      _obscurePassword = !_obscurePassword; // Bascule entre afficher et masquer
+                      _obscurePassword =
+                          !_obscurePassword; // Bascule entre afficher et masquer
                     });
                   },
                 ),
@@ -59,7 +99,7 @@ class _LoginPageState extends State<EstheticianLoginPage> {
             ),
             SizedBox(height: 20),
             _selectedSalon != null
-                ? Text('Salon sélectionné: $_selectedSalon')
+                ? Text('Salon sélectionné: $salonName')
                 : _errorMessage != null
                     ? Text(
                         _errorMessage!,
@@ -94,11 +134,23 @@ class _LoginPageState extends State<EstheticianLoginPage> {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        var clientData = querySnapshot.docs.first.data() as Map<String, dynamic>;
+        var clientData =
+            querySnapshot.docs.first.data() as Map<String, dynamic>;
         setState(() {
-          _selectedSalon = clientData['salon'] ?? 'Salon inconnu';
+          _selectedSalon = clientData['salonId'] ?? 'Salon inconnu';
           _errorMessage = null;
         });
+        // Appeler la fonction pour récupérer le nom du salon
+        if (_selectedSalon != null && _selectedSalon != 'Salon inconnu') {
+          _fetchSalonName(_selectedSalon!);
+          print(_selectedSalon);
+        } else {
+          print(_selectedSalon);
+          setState(() {
+            _selectedSalon = null;
+            _errorMessage = 'Aucun salon trouvé pour cet email';
+          });
+        }
       } else {
         setState(() {
           _selectedSalon = null;
@@ -120,12 +172,15 @@ class _LoginPageState extends State<EstheticianLoginPage> {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => EstheticianHome(salonId: _selectedSalon!), // Passe le salon sélectionné
+          builder: (context) => EstheticianHome(
+              salonId: _selectedSalon!), // Passe le salon sélectionné
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Veuillez entrer un email valide ou un mot de passe correct.')),
+        SnackBar(
+            content: Text(
+                'Veuillez entrer un email valide ou un mot de passe correct.')),
       );
     }
   }

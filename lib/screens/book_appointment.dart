@@ -5,7 +5,6 @@ import 'payment_page.dart';
 
 class BookAppointmentPage extends StatefulWidget {
   final Map<String, String>? customerInfo;
-
   final String salonId; // ID du salon
 
   BookAppointmentPage({
@@ -34,6 +33,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     _fetchServices();
   }
 
+  // Populate customer info if available
   void _populateCustomerInfo() {
     if (widget.customerInfo != null) {
       _firstNameController.text = widget.customerInfo!['first_name'] ?? '';
@@ -43,18 +43,17 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     }
   }
 
+  // Fetch services available for the selected salon
   void _fetchServices() async {
     try {
       var serviceSnapshots = await FirebaseFirestore.instance
           .collection('services')
-          .where('salon_id',
-              isEqualTo: widget.salonId) // Filtrer par ID de salon
+          .where('salon_id', isEqualTo: widget.salonId) // Filter by salon ID
           .get();
       setState(() {
         services = serviceSnapshots.docs.map((doc) {
           return {
-            'name':
-                doc.data().containsKey('nom') ? doc['nom'] : 'Service inconnu',
+            'name': doc['nom'] ?? 'Service inconnu',
             'selected': false,
           };
         }).toList();
@@ -64,6 +63,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     }
   }
 
+  // Save the appointment to Firestore
   Future<void> _saveAppointment() async {
     List<String> selectedServices = services
         .where((service) => service['selected'] as bool)
@@ -90,6 +90,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     }
   }
 
+  // Check for existing appointments at the same time
   Future<bool> _checkForExistingAppointments() async {
     try {
       QuerySnapshot appointments = await FirebaseFirestore.instance
@@ -97,7 +98,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
           .where('date', isEqualTo: _dateController.text)
           .where('time', isEqualTo: _timeController.text)
           .where('salon_id',
-              isEqualTo: widget.salonId) // Vérifier pour le salon sélectionné
+              isEqualTo: widget.salonId) // Check for selected salon
           .get();
 
       return appointments.docs.isNotEmpty;
@@ -107,6 +108,7 @@ class _BookAppointmentPageState extends State<BookAppointmentPage> {
     }
   }
 
+  // Show dialog when an appointment exists or allow continuation to payment
   void _showExistingAppointmentsDialog(bool conflictExists) {
     showDialog(
       context: context,
